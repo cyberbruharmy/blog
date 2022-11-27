@@ -1,0 +1,44 @@
+name: Build and Deploy
+on:
+  schedule:
+    - cron: "0 0 * * *" # Every day at midnight.
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Set up pipenv
+        uses: dschep/install-pipenv-action@v1
+        with:
+          version: 2020.8.13
+
+      - name: Checkout 🛎️
+        uses: actions/checkout@v2.3.2
+        with:
+          persist-credentials: false
+
+      - name: Install and Build 🔧
+        env:
+          NOTION_TOKEN: ${{ d01a220ec3dfe7b36d11ae53b5c171120aa71d2f78b11e3c7559be0d98a82b21cfa67db1336a72e9e5708244accc4ac1217c030d2e3d6d8448726a0d0d2a16e29d1bf4cc64b5bee00250c0bac07d }}
+          NOTION_ROOT_PAGE_ID: ${{ 06b03c4cbbce406fb53d2d7926c2d876 }}
+        run: |
+          pipenv install
+          pipenv run python ./bin/get-blog-posts.py
+          yarn install
+          yarn build
+
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@3.5.9
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: gh-pages
+          FOLDER: public
+          CLEAN: true
